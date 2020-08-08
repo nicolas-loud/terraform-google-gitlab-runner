@@ -61,6 +61,34 @@ resource "google_service_account_iam_member" "ci_worker_ci_runner" {
   member             = "serviceAccount:${google_service_account.ci_runner.email}"
 }
 
+# Cache for the Gitlab CI runner
+resource "google_storage_bucket" "cache" {
+    name          = join("-", [local.ci_runner_gitlab_name_final, "cache"])
+    location      = "EU"
+    force_destroy = true
+
+    lifecycle_rule {
+        condition {
+            age = "30"
+        }
+        action {
+            type = "Delete"
+        }
+    }
+}
+resource "google_service_account" "cache-user" {
+    account_id = join("-", [local.ci_runner_gitlab_name_final, "sa"])
+}
+resource "google_service_account_key" "cache-user" {
+    service_account_id = google_service_account.cache-user.name
+    public_key_type    = "TYPE_X509_PEM_FILE"
+}
+resource "google_project_iam_member" "project" {
+    project = var.gcp_project
+    role    = "roles/storage.objectAdmin"
+    member  = format("serviceAccount:%s", google_service_account.cache-user.email)
+}
+
 resource "google_compute_instance" "ci_runner" {
   project      = var.gcp_project
   name         = "${var.gcp_resource_prefix}-runner"
@@ -119,12 +147,14 @@ docker-machine rm -y ${var.gcp_resource_prefix}-test-machine
 echo "Setting GitLab concurrency"
 sed -i "s/concurrent = .*/concurrent = ${var.ci_concurrency}/" /etc/gitlab-runner/config.toml
 
+echo ${google_service_account_key.cache-user.private_key} | base64 -d > /etc/gitlab-runner/key.json
+
 echo "Registering GitLab CI runner with GitLab instance."
 sudo gitlab-runner register -n  \
     --url ${var.gitlab_url} \
     --token ${var.ci_token} \
     --executor "docker+machine" \
-    --docker-image "alpine:latest"  \
+    --docker-image "alpine:latest" \
     --tag-list "${var.ci_runner_gitlab_tags}" \
     --machine-machine-driver google \
     --docker-privileged=${var.docker_privileged} \
@@ -139,6 +169,10 @@ sudo gitlab-runner register -n  \
     --machine-machine-options "google-disk-type=pd-ssd" \
     --machine-machine-options "google-disk-size=${var.ci_worker_disk_size}" \
     --machine-machine-options "google-tags=${var.ci_worker_instance_tags}" \
+    --cache-type gcs \
+    --cache-shared \
+    --cache-gcs-bucket-name ${google_storage_bucket.cache.name} \
+    --cache-gcs-credentials-file /etc/gitlab-runner/key.json \
     --machine-machine-options "google-use-internal-ip" \
     --machine-machine-options "google-network=${var.ci_runner_network}" \
     %{if var.ci_runner_subnetwork != ""}--machine-machine-options "google-subnetwork=${var.ci_runner_subnetwork}"%{endif} \
