@@ -150,7 +150,8 @@ sed -i "s/concurrent = .*/concurrent = ${var.ci_concurrency}/" /etc/gitlab-runne
 echo ${google_service_account_key.cache-user.private_key} | base64 -d > /etc/gitlab-runner/key.json
 
 echo "Registering GitLab CI runner with GitLab instance."
-sudo gitlab-runner register -n  \
+sudo gitlab-runner register -n \
+    --description "${local.ci_runner_gitlab_name_final}" \
     --url ${var.gitlab_url} \
     --token ${var.ci_token} \
     --executor "docker+machine" \
