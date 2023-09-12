@@ -123,7 +123,7 @@ curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/sc
 sudo yum install -y gitlab-runner
 
 echo "Installing docker machine."
-curl -L https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-Linux-x86_64 -o /tmp/docker-machine
+curl -L https://gitlab-docker-machine-downloads.s3.amazonaws.com/v0.16.2-gitlab.22/docker-machine-Linux-x86_64 -o /tmp/docker-machine
 sudo install /tmp/docker-machine /usr/local/bin/docker-machine
 
 echo "Verifying docker-machine and generating SSH keys ahead of time."
