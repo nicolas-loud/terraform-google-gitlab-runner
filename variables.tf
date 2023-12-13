@@ -32,15 +32,15 @@ variable "gitlab_url" {
   description = "The URL of the GitLab server hosting the projects to be built."
 }
 variable "gcp_resource_prefix" {
-  type    = string
-  default = "gitlab-ci"
+  type        = string
+  default     = "gitlab-ci"
   description = "The prefix to apply to all GCP resource names (e.g. <prefix>-runner, <prefix>-worker-1)."
 }
 
 # Runner options
 variable "ci_runner_network" {
-  type = string
-  default = "default"
+  type        = string
+  default     = "default"
   description = "the network to add the runner on"
 }
 
@@ -60,10 +60,11 @@ variable "ci_runner_gitlab_name" {
   default     = ""
   description = "Register the runner in GitLab using this name.  If empty the value \"gcp-$${var.gcp_project}\" will be used."
 }
-variable "ci_runner_gitlab_tags" {
-    type        = string
-    default     = ""
-    description = "Register the runner to execute GitLab jobs with these tags."
+
+variable "ci_runner_instance_labels" {
+  type        = map(string)
+  default     = {}
+  description = "Arbitrary labels as key/value."
 }
 
 variable "ci_runner_instance_type" {
@@ -73,6 +74,25 @@ variable "ci_runner_instance_type" {
 The instance type used for the runner. This shouldn't need to be changed because the builds
 themselves run on separate worker instances.
 EOF
+}
+
+variable "ci_runner_instance_preemptible" {
+  type        = bool
+  default     = false
+  description = "Specifies if the instance is preemptible. If this field is set to true, then automatic_restart must be set to false."
+}
+
+variable "ci_runner_instance_automatic_restart" {
+  type        = bool
+  default     = true
+  description = "Specifies if the instance should be restarted if it was terminated by Compute Engine (not a user)."
+}
+
+# See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance#provisioning_model
+variable "ci_runner_instance_model" {
+  type        = string
+  default     = "STANDARD"
+  description = "STANDARD or SPOT. If this is set to SPOT, preemptible should be true and automatic_restart should be false."
 }
 
 # Worker options

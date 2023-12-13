@@ -63,30 +63,44 @@ resource "google_service_account_iam_member" "ci_worker_ci_runner" {
 
 # Cache for the Gitlab CI runner
 resource "google_storage_bucket" "cache" {
-    name          = join("-", [local.ci_runner_gitlab_name_final, "cache"])
-    location      = "EU"
-    force_destroy = true
+  name          = join("-", [local.ci_runner_gitlab_name_final, "cache"])
+  location      = "EU"
+  force_destroy = true
 
-    lifecycle_rule {
-        condition {
-            age = "30"
-        }
-        action {
-            type = "Delete"
-        }
+  lifecycle_rule {
+    condition {
+      age = "30"
     }
+    action {
+      type = "Delete"
+    }
+  }
 }
 resource "google_service_account" "cache-user" {
-    account_id = join("-", [local.ci_runner_gitlab_name_final, "sa"])
+  account_id = join("-", [local.ci_runner_gitlab_name_final, "sa"])
 }
 resource "google_service_account_key" "cache-user" {
-    service_account_id = google_service_account.cache-user.name
-    public_key_type    = "TYPE_X509_PEM_FILE"
+  service_account_id = google_service_account.cache-user.name
+  public_key_type    = "TYPE_X509_PEM_FILE"
 }
 resource "google_project_iam_member" "project" {
-    project = var.gcp_project
-    role    = "roles/storage.objectAdmin"
-    member  = format("serviceAccount:%s", google_service_account.cache-user.email)
+  project = var.gcp_project
+  role    = "roles/storage.objectAdmin"
+  member  = format("serviceAccount:%s", google_service_account.cache-user.email)
+}
+
+resource "google_compute_firewall" "rule-runner-docker-machines" {
+  name    = "docker-machines"
+  network = var.ci_runner_network
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_ranges = ["${google_compute_instance.ci_runner.network_interface[0].network_ip}/32"]
+  target_tags = split(",", var.ci_worker_instance_tags)
+  priority = 1000
 }
 
 resource "google_compute_instance" "ci_runner" {
@@ -94,8 +108,15 @@ resource "google_compute_instance" "ci_runner" {
   name         = "${var.gcp_resource_prefix}-runner"
   machine_type = var.ci_runner_instance_type
   zone         = var.gcp_zone
+  labels       = var.ci_runner_instance_labels
 
   allow_stopping_for_update = true
+
+  scheduling {
+    preemptible        = var.ci_runner_instance_preemptible
+    automatic_restart  = var.ci_runner_instance_automatic_restart
+    provisioning_model = var.ci_runner_instance_model
+  }
 
   boot_disk {
     initialize_params {
@@ -108,7 +129,6 @@ resource "google_compute_instance" "ci_runner" {
   network_interface {
     network    = var.ci_runner_network
     subnetwork = var.ci_runner_subnetwork
-
 
     access_config {
       // Ephemeral IP
@@ -150,13 +170,13 @@ sed -i "s/concurrent = .*/concurrent = ${var.ci_concurrency}/" /etc/gitlab-runne
 echo ${google_service_account_key.cache-user.private_key} | base64 -d > /etc/gitlab-runner/key.json
 
 echo "Registering GitLab CI runner with GitLab instance."
+
 sudo gitlab-runner register -n \
     --description "${local.ci_runner_gitlab_name_final}" \
     --url ${var.gitlab_url} \
     --token ${var.ci_token} \
     --executor "docker+machine" \
     --docker-image "alpine:latest" \
-    --tag-list "${var.ci_runner_gitlab_tags}" \
     --machine-machine-driver google \
     --docker-privileged=${var.docker_privileged} \
     --machine-idle-time ${var.ci_worker_idle_time} \
