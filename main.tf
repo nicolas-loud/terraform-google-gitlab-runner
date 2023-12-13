@@ -98,9 +98,9 @@ resource "google_compute_firewall" "rule-runner-docker-machines" {
     ports    = ["22"]
   }
 
-  source_ranges = ["${google_compute_instance.ci_runner.network_interface[0].network_ip}/32"]
+  source_tags = ["gitlab-ci-runner"]
   target_tags = split(",", var.ci_worker_instance_tags)
-  priority = 1000
+  priority    = 1000
 }
 
 resource "google_compute_instance" "ci_runner" {
@@ -109,6 +109,7 @@ resource "google_compute_instance" "ci_runner" {
   machine_type = var.ci_runner_instance_type
   zone         = var.gcp_zone
   labels       = var.ci_runner_instance_labels
+  tags         = ["gitlab-ci-runner"]
 
   allow_stopping_for_update = true
 
