@@ -177,8 +177,11 @@ sudo gitlab-runner register -n \
     --url ${var.gitlab_url} \
     --token ${var.ci_token} \
     --executor "docker+machine" \
+    --machine-max-builds "${var.ci_runner_machine_max_builds}" \
     --docker-image "alpine:latest" \
     --machine-machine-driver google \
+    --env "DOCKER_TLS_CERTDIR=${var.docker_tls_certdir}" \
+    --docker-tlsverify="${tostring(var.docker_tls_verify)}" \
     --docker-privileged=${var.docker_privileged} \
     --machine-idle-time ${var.ci_worker_idle_time} \
     --machine-machine-name "${var.gcp_resource_prefix}-worker-%s" \

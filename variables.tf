@@ -126,6 +126,20 @@ variable "docker_privileged" {
   default     = "false"
   description = "Give extended privileges to container."
 }
+variable "docker_tls_certdir" {
+  type = string
+  default = ""
+}
+variable "docker_tls_verify" {
+  type = bool
+  default = false
+}
+
+variable "ci_runner_machine_max_builds" {
+  type = number
+  default = 100
+}
+
 
 # Pre/post hook scripts
 variable "pre_clone_script" {
