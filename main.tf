@@ -194,6 +194,7 @@ sudo gitlab-runner register -n \
     --machine-machine-options "google-disk-type=pd-ssd" \
     --machine-machine-options "google-disk-size=${var.ci_worker_disk_size}" \
     --machine-machine-options "google-tags=${var.ci_worker_instance_tags}" \
+    --machine-machine-options "google-preemptible=${tostring(var.ci_worker_instance_preemptible)}" \
     --cache-type gcs \
     --cache-shared \
     --cache-gcs-bucket-name ${google_storage_bucket.cache.name} \

@@ -82,6 +82,11 @@ variable "ci_runner_instance_preemptible" {
   description = "Specifies if the instance is preemptible. If this field is set to true, then automatic_restart must be set to false."
 }
 
+variable "ci_worker_instance_preemptible" {
+  type        = bool
+  default     = false
+}
+
 variable "ci_runner_instance_automatic_restart" {
   type        = bool
   default     = true
