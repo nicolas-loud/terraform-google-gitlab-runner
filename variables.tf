@@ -38,6 +38,16 @@ variable "gcp_resource_prefix" {
 }
 
 # Runner options
+variable "ci_runner_limit" {
+  type = number
+  default = 0
+}
+
+variable "ci_runner_request-concurrency" {
+  type = number
+  default = 0
+}
+
 variable "ci_runner_network" {
   type        = string
   default     = "default"
