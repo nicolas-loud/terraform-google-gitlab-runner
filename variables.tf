@@ -65,6 +65,13 @@ variable "ci_runner_disk_size" {
   default     = "20"
   description = "The size of the persistent disk in GB."
 }
+
+variable "ci_runner_boot_image" {
+  type        = string
+  default     = "centos-cloud/centos-stream-9"
+  description = "The runner boot image"
+}
+
 variable "ci_runner_gitlab_name" {
   type        = string
   default     = ""
