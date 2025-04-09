@@ -177,8 +177,8 @@ sudo gitlab-runner register -n \
     --url ${var.gitlab_url} \
     --token ${var.ci_token} \
     --executor "docker+machine" \
-    --limit ${var.ci_runner_limit}
-    --request-concurrency ${var.ci_runner_request-concurrency}
+    --limit ${var.ci_runner_limit} \
+    --request-concurrency ${var.ci_runner_request-concurrency} \
     --machine-max-builds "${var.ci_runner_machine_max_builds}" \
     --docker-image "alpine:latest" \
     --machine-machine-driver google \
