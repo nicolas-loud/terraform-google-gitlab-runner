@@ -121,7 +121,7 @@ resource "google_compute_instance" "ci_runner" {
 
   boot_disk {
     initialize_params {
-      image = "rocky-linux-cloud/rocky-linux-8"
+      image = var.ci_runner_boot_image
       size  = var.ci_runner_disk_size
       type  = "pd-standard"
     }
@@ -177,8 +177,8 @@ sudo gitlab-runner register -n \
     --url ${var.gitlab_url} \
     --token ${var.ci_token} \
     --executor "docker+machine" \
-    --limit ${var.ci_runner_limit}
-    --request-concurrency ${var.ci_runner_request-concurrency}
+    --limit ${var.ci_runner_limit} \
+    --request-concurrency ${var.ci_runner_request-concurrency} \
     --machine-max-builds "${var.ci_runner_machine_max_builds}" \
     --docker-image "alpine:latest" \
     --machine-machine-driver google \
